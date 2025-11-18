@@ -22,5 +22,4 @@ Route::middleware(['dummy.jwt'])->group(function () {
 Route::post('/categories', [CategoryController::class, 'store']);
 Route::get('/categories', [CategoryController::class, 'index']);
 Route::put('/categories/{id}', [CategoryController::class, 'update']);
-Route::patch('/categories/{id}', [CategoryController::class, 'update']);
 Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
