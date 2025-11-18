@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\OrdersController;
 use Illuminate\Http\Request;
@@ -25,6 +26,13 @@ Route::middleware(['dummy.jwt'])->group(function () {
     Route::put('/orders/{id}', [OrdersController::class, 'update']);
     Route::delete('/orders/{id}', [OrdersController::class, 'destroy']);
 });
+
+// PRODUCT
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::post('/products', [ProductController::class, 'store']);
+Route::put('/products/{id}', [ProductController::class, 'update']);
+Route::delete('/products/{id}', [ProductController::class, 'destroy']);
 
 // CATEGORIES
 Route::post('/categories', [CategoryController::class, 'store']);
