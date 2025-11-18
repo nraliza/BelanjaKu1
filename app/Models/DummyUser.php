@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
+use Illuminate\Auth\Authenticatable;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class DummyUser implements JWTSubject
+class DummyUser implements AuthenticatableContract, JWTSubject
 {
+    use Authenticatable;
+
     public $id;
     public $name;
     public $email;
@@ -14,10 +17,10 @@ class DummyUser implements JWTSubject
 
     public function __construct($attributes)
     {
-        $this->id = $attributes['id'] ?? null;
-        $this->name = $attributes['name'] ?? null;
+        $this->id    = $attributes['id'] ?? null;
+        $this->name  = $attributes['name'] ?? null;
         $this->email = $attributes['email'] ?? null;
-        $this->role = $attributes['role'] ?? 'user';
+        $this->role  = $attributes['role'] ?? 'user';
     }
 
     public function getJWTIdentifier()

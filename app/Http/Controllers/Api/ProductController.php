@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException; // <-- Ditambahkan untuk menangani error validasi
 
 class ProductController extends Controller
 {
-    // Data dummy produk sepatu
+    // Data dummy produk sepatu (simulasi database)
     private $products = [
         [
             'id' => 1,
@@ -15,7 +16,7 @@ class ProductController extends Controller
             'description' => 'Sepatu lari kasual, nyaman untuk sehari-hari.',
             'price' => 1850000,
             'stock' => 15,
-            'category_id' => 1, // Olahraga
+            'category_id' => 1,
             'category_name' => 'Olahraga'
         ],
         [
@@ -24,7 +25,7 @@ class ProductController extends Controller
             'description' => 'Sepatu klasik yang cocok untuk gaya vintage.',
             'price' => 1200000,
             'stock' => 22,
-            'category_id' => 2, // Casual
+            'category_id' => 2,
             'category_name' => 'Casual'
         ],
         [
@@ -33,7 +34,7 @@ class ProductController extends Controller
             'description' => 'Sepatu formal premium untuk acara resmi.',
             'price' => 850000,
             'stock' => 8,
-            'category_id' => 3, // Formal
+            'category_id' => 3,
             'category_name' => 'Formal'
         ],
     ];
@@ -41,6 +42,7 @@ class ProductController extends Controller
     /**
      * Menampilkan semua daftar produk.
      * GET /api/products
+     * Tidak memerlukan JWT (Publik)
      */
     public function index()
     {
@@ -50,57 +52,56 @@ class ProductController extends Controller
     /**
      * Menampilkan detail satu produk berdasarkan ID.
      * GET /api/products/{id}
+     * Tidak memerlukan JWT (Publik)
      */
     public function show($id)
     {
-        // Cari produk berdasarkan ID
-        $product = collect($this->products)->firstWhere('id', $id);
+        // Mencari produk di array dummy
+        $product = collect($this->products)->firstWhere('id', (int)$id);
 
         if (!$product) {
-            return response()->json(['message' => 'Produk tidak ditemukan'], 404);
+            return response()->json(['message' => "Produk dengan ID {$id} tidak ditemukan"], 404);
         }
 
         return response()->json($product);
     }
 
     /**
-     * Menyimpan produk baru.
+     * Menyimpan produk baru. (Endpoint WAJIB Anda)
      * POST /api/products
+     * MEMERLUKAN JWT
      */
     public function store(Request $request)
     {
-        // Validasi input data
+        // Validasi input data (Mengikuti pola CategoryController)
         try {
-            $request->validate([
+            $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'required|string',
                 'price' => 'required|integer|min:1000',
                 'stock' => 'required|integer|min:0',
-                'category_id' => 'required|integer', // Asumsi ID kategori sudah ada
+                'category_id' => 'required|integer', 
                 'category_name' => 'required|string',
             ]);
-        } catch (ValidationException $e) {
+        } catch (ValidationException $e) { // <-- Menggunakan ValidationException yang sudah di-import
             return response()->json([
                 'message' => 'Validasi gagal',
                 'errors' => $e->errors()
             ], 422);
         }
 
-        $newProduct = [
-            'id' => end($this->products)['id'] + 1, // Auto-increment ID dummy
-            'name' => $request->name,
-            'description' => $request->description,
-            'price' => $request->price,
-            'stock' => $request->stock,
-            'category_id' => $request->category_id,
-            'category_name' => $request->category_name,
-        ];
+        // Simulasi auto-increment ID
+        $lastId = end($this->products)['id'];
+        
+        $newProduct = array_merge($validated, [
+            'id' => $lastId + 1,
+        ]);
 
-        // Simulasi penyimpanan (hanya ditambahkan ke array sementara)
-        $this->products[] = $newProduct;
+        // Simulasi penyimpanan data (tidak persistent)
+        // $this->products[] = $newProduct; 
 
         return response()->json([
-            'message' => 'Produk berhasil ditambahkan',
+            'message' => 'Produk berhasil ditambahkan (dummy)',
             'product' => $newProduct
         ], 201);
     }
@@ -108,27 +109,18 @@ class ProductController extends Controller
     /**
      * Memperbarui detail produk.
      * PUT /api/products/{id}
+     * MEMERLUKAN JWT
      */
     public function update(Request $request, $id)
     {
-        $index = -1;
-        
-        // Cari indeks produk
-        foreach ($this->products as $key => $product) {
-            if ($product['id'] == $id) {
-                $index = $key;
-                break;
-            }
+        // 1. Cari Produk (Simulasi)
+        $product = collect($this->products)->firstWhere('id', (int)$id);
+
+        if (!$product) {
+            return response()->json(['message' => "Produk dengan ID {$id} tidak ditemukan"], 404);
         }
 
-        if ($index === -1) {
-            return response()->json(['message' => 'Produk tidak ditemukan'], 404);
-        }
-
-        // Ambil data produk saat ini
-        $product = $this->products[$index];
-
-        // Lakukan update data (tanpa validasi menyeluruh untuk PUT sebagian/PATCH)
+        // 2. Lakukan update parsial (PUT/PATCH style)
         $product['name'] = $request->name ?? $product['name'];
         $product['description'] = $request->description ?? $product['description'];
         $product['price'] = $request->price ?? $product['price'];
@@ -136,11 +128,9 @@ class ProductController extends Controller
         $product['category_id'] = $request->category_id ?? $product['category_id'];
         $product['category_name'] = $request->category_name ?? $product['category_name'];
 
-        // Simulasikan pembaruan
-        $this->products[$index] = $product;
-
+        // 3. Kembalikan Response
         return response()->json([
-            'message' => "Produk dengan ID $id berhasil diperbarui",
+            'message' => "Produk dengan ID {$id} berhasil diperbarui (dummy)",
             'product' => $product
         ]);
     }
@@ -148,28 +138,22 @@ class ProductController extends Controller
     /**
      * Menghapus produk (simulasi).
      * DELETE /api/products/{id}
+     * MEMERLUKAN JWT
      */
     public function destroy($id)
     {
-        // Cari indeks produk
-        $index = -1;
-        foreach ($this->products as $key => $product) {
-            if ($product['id'] == $id) {
-                $index = $key;
-                break;
-            }
-        }
+        // Cari produk (Simulasi)
+        $product = collect($this->products)->firstWhere('id', (int)$id);
 
-        if ($index === -1) {
-            // Walaupun simulasi, kita tetap memberikan pesan 404 jika ID tidak ada
-            return response()->json(['message' => 'Produk tidak ditemukan'], 404);
+        if (!$product) {
+            return response()->json(['message' => "Produk dengan ID {$id} tidak ditemukan"], 404);
         }
-
+        
         // Simulasi penghapusan
         // unset($this->products[$index]); // Di environment nyata ini akan dihapus
         
         return response()->json([
-            'message' => "Produk dengan ID $id berhasil dihapus (simulasi)"
+            'message' => "Produk dengan ID {$id} berhasil dihapus (simulasi)"
         ]);
     }
 }

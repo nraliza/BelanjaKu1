@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CustomerController;
 use App\Http\Controllers\Api\OrdersController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -20,19 +21,34 @@ Route::middleware(['dummy.jwt'])->group(function () {
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Orders
+    // CUSTOMERS
+    Route::get('/customers', [CustomerController::class, 'index']);
+    Route::post('/customers', [CustomerController::class, 'store']);
+    Route::get('/customers/{id}', [CustomerController::class, 'show']);
+    Route::put('/customers/{id}', [CustomerController::class, 'update']);
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
+
+    // ORDERS
     Route::post('/orders', [OrdersController::class, 'store']);
     Route::get('/orders', [OrdersController::class, 'index']);
     Route::put('/orders/{id}', [OrdersController::class, 'update']);
     Route::delete('/orders/{id}', [OrdersController::class, 'destroy']);
 });
 
-// PRODUCT
-Route::get('/products', [ProductController::class, 'index']);
-Route::get('/products/{id}', [ProductController::class, 'show']);
-Route::post('/products', [ProductController::class, 'store']);
-Route::put('/products/{id}', [ProductController::class, 'update']);
-Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+// ROUTES UNTUK MODUL PRODUCT 
+Route::prefix('products')->controller(ProductController::class)->group(function () {
+
+    // PUBLIC
+    Route::get('/', 'index');
+    Route::get('/{id}', 'show');
+
+    // PROTECTED (JWT)
+    Route::middleware('dummy.jwt')->group(function () {
+        Route::post('/', 'store');
+        Route::put('/{id}', 'update');
+        Route::delete('/{id}', 'destroy');
+    });
+});
 
 // CATEGORIES
 Route::post('/categories', [CategoryController::class, 'store']);
